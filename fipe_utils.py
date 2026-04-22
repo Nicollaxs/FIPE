@@ -3,16 +3,40 @@ import os
 from datetime import datetime
 import json
 import time
+import random
 
-def _fazer_requisicao(url, params=None, timeout=20, retry_429=True):
-    response = req.get(url, params=params, timeout=timeout)
+def _fazer_requisicao(url, params=None, timeout=20, max_tentativas=5):
+    """Faz requisição com tolerância a falhas transitórias (429, 5xx e timeout)."""
+    tentativa = 1
 
-    if response.status_code == 429 and retry_429:
-        print('Limite atingido! Dormindo por 60 segundos...')
-        time.sleep(60)
-        response = req.get(url, params=params, timeout=timeout)
+    while tentativa <= max_tentativas:
+        try:
+            response = req.get(url, params=params, timeout=timeout)
 
-    return response
+            if response.status_code == 429:
+                espera = min(60, 2 ** tentativa) + random.uniform(0, 1)
+                print(f'Limite atingido (429). Tentativa {tentativa}/{max_tentativas}. Dormindo {espera:.1f}s...')
+                time.sleep(espera)
+                tentativa += 1
+                continue
+
+            if 500 <= response.status_code <= 599:
+                espera = min(30, 2 ** tentativa) + random.uniform(0, 1)
+                print(f'Erro servidor ({response.status_code}). Tentativa {tentativa}/{max_tentativas}. Dormindo {espera:.1f}s...')
+                time.sleep(espera)
+                tentativa += 1
+                continue
+
+            return response
+
+        except req.RequestException as exc:
+            espera = min(30, 2 ** tentativa) + random.uniform(0, 1)
+            print(f'Erro de rede: {exc}. Tentativa {tentativa}/{max_tentativas}. Dormindo {espera:.1f}s...')
+            time.sleep(espera)
+            tentativa += 1
+
+    print('Falha após múltiplas tentativas.')
+    return None
 
 def _montar_caminho_datalake(categoria, nome_arquivo):
     hoje = datetime.now().strftime('%Y-%m-%d')
@@ -49,12 +73,13 @@ def get_referencias_meses():
     url = 'https://fipe.parallelum.com.br/api/v2/references'
     response = _fazer_requisicao(url, timeout=20)
 
-    if response.ok :
+    if response and response.ok :
         dados = response.json()
         salvar_no_datalake(dados, 'referencias', nome_arq)
         return dados
     else :
-        print(f'Erro na requisição : {response.status_code}')
+        status = response.status_code if response is not None else 'sem resposta'
+        print(f'Erro na requisição : {status}')
         return None
 
 def get_marcas(tipo_veiculo, codigo_referencia=None):    
@@ -73,12 +98,13 @@ def get_marcas(tipo_veiculo, codigo_referencia=None):
 
     response = _fazer_requisicao(url, params=params, timeout=20)
 
-    if response.ok :
+    if response and response.ok :
         dados = response.json()
         salvar_no_datalake(dados,'marcas',nome_arq)
         return dados
     else :
-        print(f'Erro na requisição : {response.status_code}')
+        status = response.status_code if response is not None else 'sem resposta'
+        print(f'Erro na requisição : {status}')
         return None
     
 
@@ -93,12 +119,13 @@ def get_modelos(tipo_veiculo, id_marca, codigo_referencia):
 
     response = _fazer_requisicao(url, params=params, timeout=20)
 
-    if response.ok :
+    if response and response.ok :
         dados = response.json()
         salvar_no_datalake(dados, 'modelos', nome_arq)
         return dados
     else :
-        print(f'Erro na requisição : {response.status_code}')
+        status = response.status_code if response is not None else 'sem resposta'
+        print(f'Erro na requisição : {status}')
         return None
 
 def get_anos(tipo_veiculo, id_marca, id_modelo, codigo_referencia):
@@ -112,12 +139,13 @@ def get_anos(tipo_veiculo, id_marca, id_modelo, codigo_referencia):
 
     response = _fazer_requisicao(url, params=params, timeout=20)
 
-    if response.ok:
+    if response and response.ok:
         dados = response.json()
         salvar_no_datalake(dados, 'anos', nome_arq)
         return dados
     else:
-        print(f'Erro na requisição anos: {response.status_code}')
+        status = response.status_code if response is not None else 'sem resposta'
+        print(f'Erro na requisição anos: {status}')
         return None
 
 def get_precos(tipo_veiculo, id_marca, id_modelo, id_ano, codigo_referencia):
@@ -131,10 +159,11 @@ def get_precos(tipo_veiculo, id_marca, id_modelo, id_ano, codigo_referencia):
 
     response = _fazer_requisicao(url, params=params, timeout=20)
 
-    if response.ok :
+    if response and response.ok :
         dados  = response.json()
         salvar_no_datalake(dados, 'precos',nome_arq)
         return dados
     else :
-        print(f'Erro na requisição : {response.status_code}')
+        status = response.status_code if response is not None else 'sem resposta'
+        print(f'Erro na requisição : {status}')
         return None

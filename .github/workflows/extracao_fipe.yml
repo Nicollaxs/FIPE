@@ -1,0 +1,51 @@
+name: Pipeline FIPE Sem Token
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Roda todo dia às 3 da manhã
+  workflow_dispatch:      # Permite rodar clicando no botão
+
+concurrency:
+  group: pipeline-fipe
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    permissions:
+      contents: write    # Permissão para o robô salvar arquivos no seu Git
+    env:
+      FIPE_MESES_OFFSET: '0'
+      FIPE_MESES_LIMIT: '12'
+      FIPE_MODELOS_LIMIT: '0'
+      FIPE_SLEEP_SECONDS: '1.0'
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+
+      - name: Rodar Script
+        run: python main_pipeline.py
+
+      - name: Salvar Dados no Repositório
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          if [ -d data ]; then
+            git add data/
+            git commit -m "Auto: Ingestao de dados FIPE" || echo "Sem mudancas para salvar"
+            git push
+          else
+            echo "Diretorio data/ nao encontrado. Nada para versionar."
+          fi
