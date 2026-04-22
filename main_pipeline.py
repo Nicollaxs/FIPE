@@ -12,11 +12,26 @@ def executar_carga_teste():
         return
 
     # 2. Recorte: Vamos pegar apenas os 2 meses mais recentes para o primeiro teste
-    # Depois que funcionar, você pode mudar para meses[:12]
-    recorte_meses = meses[:2]
+    recorte_meses = meses[:12]  # Pegando os 12 meses mais recentes (1 ano)
     
-    # 3. Marcas Alvo: 59 (VW) e 21 (Fiat)
-    marcas_alvo = [59, 21] 
+   # Lista de IDs das principais marcas para o projeto-FIPE
+    marcas_alvo = [
+        59,   # VW - VolksWagen
+        21,   # Fiat
+        23,   # GM - Chevrolet
+        22,   # Ford
+        56,   # Toyota
+        26,   # Hyundai
+        25,   # Honda
+        29,   # Jeep
+        48,   # Renault
+        238,  # BYD (Elétricos)
+        240,  # GWM (Elétricos/Híbridos)
+        245,  # Caoa Chery
+        44,   # Peugeot (Grupo Stellantis)
+        7     # BMW (Premium/Luxo)
+    ]
+
     tipo = 'cars'
     
     for mes in recorte_meses:
@@ -32,7 +47,7 @@ def executar_carga_teste():
             
             if lista_modelos:
                 # LIMITADOR: Pegando apenas os 3 primeiros modelos para teste
-                for modelo in lista_modelos[:3]:
+                for modelo in lista_modelos:
                     mod_id = modelo['code']
                     mod_nome = modelo['name']
                     print(f"    🚗 Processando Modelo: {mod_nome}")
