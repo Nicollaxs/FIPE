@@ -1,1 +1,8 @@
 .venv
+
+# Ignore Jupyter notebook checkpoints anywhere in the repo
+**/.ipynb_checkpoints/
+**/.ipynb_checkpoints/**
+
+# Ignore raw parquet source files (local data)
+Data Layer/raw/*.parquet

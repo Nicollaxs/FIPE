@@ -1,0 +1,3 @@
+-- Consultas da camada gold
+-- Exemplo:
+-- SELECT * FROM vw_fipe_preco_medio_por_marca;

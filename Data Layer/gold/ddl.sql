@@ -1,0 +1,6 @@
+-- DDL da camada gold
+-- Exemplo:
+-- CREATE TABLE IF NOT EXISTS dim_marca (
+--   id_marca INT PRIMARY KEY,
+--   nome_marca VARCHAR(100)
+-- );
